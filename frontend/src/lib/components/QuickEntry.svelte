@@ -28,10 +28,13 @@
 	}
 
 	function closeForm() {
+		console.log('🔴 Closing modal, isOpen before:', isOpen);
 		isOpen = false;
 		quantity = '';
 		notes = '';
 		dateTime = '';
+		isSubmitting = false;
+		console.log('🔴 Modal closed, isOpen after:', isOpen);
 	}
 
 	async function handleSubmit() {
@@ -61,10 +64,15 @@
 	const quickAmounts = type === 'milk' ? [60, 90, 120, 150] : [60, 90, 120, 150];
 
 	async function quickAdd(amount: number) {
-		if (isSubmitting) return; // Prevent double-tap
+		console.log('📱 Quick add clicked:', amount, 'isSubmitting:', isSubmitting);
+		if (isSubmitting) {
+			console.log('⚠️ Already submitting, ignoring');
+			return; // Prevent double-tap
+		}
 		isSubmitting = true;
 
 		try {
+			console.log('💾 Adding entry...');
 			const entry: Omit<FeedingEntry, 'id' | 'created_at'> = {
 				type,
 				quantity_ml: amount,
@@ -72,13 +80,12 @@
 			};
 
 			await addEntryWithSync(entry);
+			console.log('✅ Entry added successfully');
 
-			// Small delay to ensure sync completes before closing
-			setTimeout(() => {
-				closeForm();
-			}, 100);
+			// Close form immediately
+			closeForm();
 		} catch (error) {
-			console.error('Failed to add entry:', error);
+			console.error('❌ Failed to add entry:', error);
 			alert('Failed to save entry. Please try again.');
 			isSubmitting = false;
 		}
