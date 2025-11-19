@@ -10,6 +10,7 @@
 	let notes = '';
 	let dateTime = '';
 	let isSubmitting = false;
+	let modalKey = 0; // Force re-render on Safari
 
 	$: icon = type === 'milk' ? '🍼' : '🍽️';
 	$: label = type === 'milk' ? 'Milk' : 'Food';
@@ -30,12 +31,22 @@
 
 	async function closeForm() {
 		console.log('🔴 Closing modal, isOpen before:', isOpen);
-		isOpen = false;
+
+		// Reset form state first
 		quantity = '';
 		notes = '';
 		dateTime = '';
 		isSubmitting = false;
-		await tick(); // Force Safari to update DOM
+
+		// Force Safari to close by incrementing key
+		modalKey++;
+
+		// Force immediate close for Safari - set isOpen after a microtask
+		await tick();
+		isOpen = false;
+
+		// Double-check after another tick
+		await tick();
 		console.log('🔴 Modal closed, isOpen after:', isOpen);
 	}
 
@@ -107,6 +118,7 @@
 
 <!-- Modal Form -->
 {#if isOpen}
+	{#key modalKey}
 	<div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
 		<div class="w-full max-w-lg bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] overflow-y-auto">
 			<!-- Header -->
@@ -219,4 +231,5 @@
 			</form>
 		</div>
 	</div>
+	{/key}
 {/if}
