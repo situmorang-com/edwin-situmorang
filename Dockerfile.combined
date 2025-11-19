@@ -1,0 +1,69 @@
+# Combined Frontend + Backend Dockerfile
+# This runs both the SvelteKit frontend and Express backend in one container
+
+FROM node:20-alpine AS frontend-builder
+
+# Build Frontend
+WORKDIR /frontend
+COPY frontend/package*.json ./
+RUN npm ci
+COPY frontend/ ./
+
+# Build arguments for frontend
+ARG VITE_GOOGLE_CLIENT_ID
+ARG VITE_API_URL=/api
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
+ENV VITE_API_URL=$VITE_API_URL
+
+RUN npm run build
+
+# Backend + Nginx stage
+FROM node:20-alpine
+
+# Install nginx
+RUN apk add --no-cache nginx
+
+# Setup backend
+WORKDIR /app
+COPY backend/package*.json ./
+RUN npm ci --only=production
+COPY backend/src ./src
+
+# Copy built frontend
+COPY --from=frontend-builder /frontend/build /usr/share/nginx/html
+
+# Create nginx config that serves frontend and proxies /api to backend
+RUN echo 'server { \
+    listen 80; \
+    server_name _; \
+    root /usr/share/nginx/html; \
+    index index.html; \
+    \
+    location / { \
+        try_files $uri $uri/ /index.html; \
+    } \
+    \
+    location /api { \
+        proxy_pass http://localhost:3001; \
+        proxy_http_version 1.1; \
+        proxy_set_header Upgrade $http_upgrade; \
+        proxy_set_header Connection "upgrade"; \
+        proxy_set_header Host $host; \
+        proxy_set_header X-Real-IP $remote_addr; \
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; \
+        proxy_set_header X-Forwarded-Proto $scheme; \
+    } \
+}' > /etc/nginx/http.d/default.conf
+
+# Create data directory
+RUN mkdir -p /app/data
+
+# Create startup script
+RUN echo '#!/bin/sh' > /start.sh && \
+    echo 'nginx' >> /start.sh && \
+    echo 'cd /app && node src/index.js' >> /start.sh && \
+    chmod +x /start.sh
+
+EXPOSE 80
+
+CMD ["/start.sh"]
