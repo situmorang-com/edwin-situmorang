@@ -61,6 +61,7 @@
 	const quickAmounts = type === 'milk' ? [60, 90, 120, 150] : [60, 90, 120, 150];
 
 	async function quickAdd(amount: number) {
+		if (isSubmitting) return; // Prevent double-tap
 		isSubmitting = true;
 
 		try {
@@ -71,11 +72,14 @@
 			};
 
 			await addEntryWithSync(entry);
-			closeForm(); // Close modal after successful quick add
+
+			// Small delay to ensure sync completes before closing
+			setTimeout(() => {
+				closeForm();
+			}, 100);
 		} catch (error) {
 			console.error('Failed to add entry:', error);
 			alert('Failed to save entry. Please try again.');
-		} finally {
 			isSubmitting = false;
 		}
 	}
