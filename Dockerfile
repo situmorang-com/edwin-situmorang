@@ -27,7 +27,15 @@ RUN apk add --no-cache nginx supervisor
 # Setup Backend
 WORKDIR /app/backend
 COPY backend/package*.json ./
-RUN npm install --only=production
+
+# Install build dependencies for sqlite3
+RUN apk add --no-cache --virtual .build-deps \
+    python3 \
+    make \
+    g++ \
+    && npm install --only=production \
+    && apk del .build-deps
+
 COPY backend/src ./src
 RUN mkdir -p /app/data
 
