@@ -21,8 +21,8 @@ RUN npm run build
 # Stage 2: Production - Backend + Nginx + Frontend
 FROM node:20-alpine
 
-# Install nginx and supervisor
-RUN apk add --no-cache nginx supervisor
+# Install nginx, supervisor, and curl for healthcheck
+RUN apk add --no-cache nginx supervisor curl
 
 # Setup Backend
 WORKDIR /app/backend
@@ -130,7 +130,7 @@ stderr_logfile_maxbytes=0\n' > /etc/supervisord.conf
 
 EXPOSE 80
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost/health || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
+  CMD curl -f http://127.0.0.1:80/health || exit 1
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
