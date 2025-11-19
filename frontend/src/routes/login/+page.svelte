@@ -33,9 +33,13 @@
 		script.onload = () => {
 			if (window.google) {
 				console.log('✅ Google Sign-In SDK loaded');
+
+				// Use popup mode for better compatibility
 				window.google.accounts.id.initialize({
 					client_id: clientId,
-					callback: handleGoogleResponse
+					callback: handleGoogleResponse,
+					auto_select: false,
+					cancel_on_tap_outside: false
 				});
 
 				window.google.accounts.id.renderButton(
@@ -45,7 +49,8 @@
 						size: 'large',
 						text: 'signin_with',
 						shape: 'pill',
-						width: 280
+						width: 280,
+						locale: 'en'
 					}
 				);
 			}
@@ -53,16 +58,25 @@
 	});
 
 	async function handleGoogleResponse(response: any) {
+		console.log('📱 Google response received:', response ? 'Yes' : 'No');
 		isLoading = true;
 		error = '';
 
 		try {
+			if (!response || !response.credential) {
+				throw new Error('No credential received from Google');
+			}
+
+			console.log('🔐 Sending credential to backend...');
 			const data = await loginWithGoogle(response.credential);
+			console.log('✅ Login successful:', data.user.name);
+
 			auth.login(data.user, data.token);
-			goto('/');
-		} catch (err) {
-			error = 'Login failed. Please try again.';
-			console.error('Login error:', err);
+			await goto('/');
+		} catch (err: any) {
+			const errorMsg = err?.message || 'Login failed. Please try again.';
+			error = errorMsg;
+			console.error('❌ Login error:', err);
 		} finally {
 			isLoading = false;
 		}
