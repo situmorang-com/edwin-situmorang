@@ -37,7 +37,9 @@ RUN apk add --no-cache --virtual .build-deps \
     && apk del .build-deps
 
 COPY backend/src ./src
-RUN mkdir -p /app/data
+
+# Create data directory for SQLite database with proper permissions
+RUN mkdir -p /app/backend/data && chmod 777 /app/backend/data
 
 # Copy Frontend build
 COPY --from=frontend-builder /frontend/build /usr/share/nginx/html
