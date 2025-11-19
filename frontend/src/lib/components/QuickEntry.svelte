@@ -71,6 +71,7 @@
 			};
 
 			await addEntryWithSync(entry);
+			closeForm(); // Close modal after successful quick add
 		} catch (error) {
 			console.error('Failed to add entry:', error);
 			alert('Failed to save entry. Please try again.');
