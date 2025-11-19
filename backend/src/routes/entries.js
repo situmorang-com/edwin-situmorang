@@ -105,27 +105,45 @@ router.get("/stats", async (req, res) => {
 // Create new entry
 router.post("/", async (req, res) => {
   try {
+    console.log("📝 Creating entry for user:", req.user?.id, req.user?.email);
+    console.log("📝 Request body:", req.body);
+
     const { type, quantity_ml, fed_at, notes } = req.body;
 
     // Validation
     if (!type || !quantity_ml || !fed_at) {
+      console.error("❌ Missing required fields:", {
+        type,
+        quantity_ml,
+        fed_at,
+      });
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     if (type !== "food" && type !== "milk") {
+      console.error("❌ Invalid type:", type);
       return res
         .status(400)
         .json({ error: 'Invalid type. Must be "food" or "milk"' });
     }
 
     if (quantity_ml <= 0 || quantity_ml > 10000) {
+      console.error("❌ Invalid quantity:", quantity_ml);
       return res.status(400).json({ error: "Invalid quantity" });
     }
 
+    if (!req.user || !req.user.id) {
+      console.error("❌ No user in request");
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    console.log("💾 Inserting into database...");
     const result = await dbRun(
       `INSERT INTO feeding_entries (user_id, type, quantity_ml, fed_at, notes) VALUES (?, ?, ?, ?, ?)`,
       [req.user.id, type, quantity_ml, fed_at, notes || null],
     );
+
+    console.log("✅ Entry inserted with ID:", result.lastID);
 
     const entry = await dbGet(
       `
@@ -139,10 +157,14 @@ router.post("/", async (req, res) => {
       [result.lastID],
     );
 
+    console.log("✅ Entry created successfully:", entry);
     res.status(201).json(entry);
   } catch (error) {
-    console.error("Error creating entry:", error);
-    res.status(500).json({ error: "Failed to create entry" });
+    console.error("❌ Error creating entry:", error);
+    console.error("❌ Error stack:", error.stack);
+    res
+      .status(500)
+      .json({ error: "Failed to create entry", details: error.message });
   }
 });
 
