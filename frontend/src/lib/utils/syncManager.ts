@@ -71,34 +71,44 @@ export async function syncData() {
   try {
     // 1. Push unsynced local entries to server
     const unsyncedEntries = await idb.getUnsyncedEntries();
+    console.log("🔄 Syncing", unsyncedEntries.length, "unsynced entries");
 
     for (const entry of unsyncedEntries) {
       try {
         const { local_id, synced, ...entryData } = entry;
         const serverEntry = await api.createEntry(entryData);
+        console.log("✅ Synced entry to server:", serverEntry);
 
         // Mark as synced in IndexedDB
         if (local_id) {
           await idb.markEntrySynced(local_id, serverEntry.id!);
         }
       } catch (error) {
-        console.error("Failed to sync entry:", error);
+        console.error("❌ Failed to sync entry:", error);
         // Continue with other entries
       }
     }
 
     // 2. Fetch all entries from server
+    console.log("📥 Fetching entries from server...");
     const serverEntries = await api.fetchEntries();
+    console.log("📥 Received", serverEntries.length, "entries from server");
 
-    // 3. Update local IndexedDB
-    await idb.saveEntries(serverEntries);
+    // Only update if we got valid data
+    if (Array.isArray(serverEntries)) {
+      // 3. Update local IndexedDB
+      await idb.saveEntries(serverEntries);
 
-    // 4. Update Svelte store
-    entries.set(serverEntries);
+      // 4. Update Svelte store
+      entries.set(serverEntries);
+      console.log("✅ Store updated with", serverEntries.length, "entries");
+    } else {
+      console.error("❌ Invalid server response:", serverEntries);
+    }
 
     syncStatus.setSynced();
   } catch (error) {
-    console.error("Sync failed:", error);
+    console.error("❌ Sync failed:", error);
     syncStatus.setSyncing(false);
   }
 }
