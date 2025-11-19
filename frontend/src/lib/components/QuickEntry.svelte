@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { tick } from 'svelte';
 	import { addEntryWithSync } from '$lib/utils/syncManager';
 	import type { FeedingEntry } from '$lib/stores/entries';
 
@@ -27,13 +28,14 @@
 		isOpen = true;
 	}
 
-	function closeForm() {
+	async function closeForm() {
 		console.log('🔴 Closing modal, isOpen before:', isOpen);
 		isOpen = false;
 		quantity = '';
 		notes = '';
 		dateTime = '';
 		isSubmitting = false;
+		await tick(); // Force Safari to update DOM
 		console.log('🔴 Modal closed, isOpen after:', isOpen);
 	}
 
@@ -82,8 +84,8 @@
 			await addEntryWithSync(entry);
 			console.log('✅ Entry added successfully');
 
-			// Close form immediately
-			closeForm();
+			// Close form - await to ensure Safari processes it
+			await closeForm();
 		} catch (error) {
 			console.error('❌ Failed to add entry:', error);
 			alert('Failed to save entry. Please try again.');
