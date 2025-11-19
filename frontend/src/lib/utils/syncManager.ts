@@ -75,13 +75,21 @@ export async function syncData() {
 
     for (const entry of unsyncedEntries) {
       try {
-        const { local_id, synced, ...entryData } = entry;
+        // Only send the fields the backend expects
+        const entryData = {
+          type: entry.type,
+          quantity_ml: entry.quantity_ml,
+          fed_at: entry.fed_at,
+          notes: entry.notes,
+        };
+
+        console.log("📤 Sending entry to server:", entryData);
         const serverEntry = await api.createEntry(entryData);
         console.log("✅ Synced entry to server:", serverEntry);
 
         // Mark as synced in IndexedDB
-        if (local_id) {
-          await idb.markEntrySynced(local_id, serverEntry.id!);
+        if (entry.local_id) {
+          await idb.markEntrySynced(entry.local_id, serverEntry.id!);
         }
       } catch (error) {
         console.error("❌ Failed to sync entry:", error);
