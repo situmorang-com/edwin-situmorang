@@ -10,16 +10,22 @@ router.use(authenticateToken);
 // Get all entries for the authenticated user
 router.get("/", async (req, res) => {
   try {
-    const entries = await dbAll(`
+    console.log("📊 Fetching entries for user:", req.user.id, req.user.email);
+    const entries = await dbAll(
+      `
 			SELECT
 				e.*,
 				u.name as feeder_name
 			FROM feeding_entries e
 			JOIN users u ON e.user_id = u.id
+			WHERE e.user_id = ?
 			ORDER BY e.fed_at DESC
 			LIMIT 1000
-		`);
+		`,
+      [req.user.id],
+    );
 
+    console.log("📊 Found", entries.length, "entries");
     res.json(entries);
   } catch (error) {
     console.error("Error fetching entries:", error);
