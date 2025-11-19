@@ -40,6 +40,11 @@
 	<meta property="og:title" content="Edwin's Feeding Tracker - Track Baby Food & Milk Intake" />
 	<meta property="og:description" content="Track baby Edwin's daily food and milk intake with this easy-to-use offline-first mobile app. Monitor feeding patterns and trends." />
 	<meta property="og:image" content="https://edwin.situmorang.com/edwin.jpg" />
+	<meta property="og:image:secure_url" content="https://edwin.situmorang.com/edwin.jpg" />
+	<meta property="og:image:type" content="image/jpeg" />
+	<meta property="og:image:width" content="945" />
+	<meta property="og:image:height" content="849" />
+	<meta property="og:image:alt" content="Baby Edwin" />
 
 	<!-- Twitter -->
 	<meta property="twitter:card" content="summary_large_image" />
