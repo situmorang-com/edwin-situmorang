@@ -104,17 +104,45 @@ export async function syncData() {
 
     // Only update if we got valid data
     if (Array.isArray(serverEntries)) {
-      // 3. Update local IndexedDB
+      // 3. Merge server entries with local unsynced entries (DON'T DELETE UNSYNCED!)
+      const remainingUnsynced = await idb.getUnsyncedEntries();
+      console.log(
+        "💾 Keeping",
+        remainingUnsynced.length,
+        "unsynced entries locally",
+      );
+
+      // Update local IndexedDB with server data
       await idb.saveEntries(serverEntries);
 
-      // 4. Update Svelte store
-      entries.set(serverEntries);
-      console.log("✅ Store updated with", serverEntries.length, "entries");
+      // 4. Combine server entries with remaining unsynced entries for display
+      const allEntries = [...serverEntries, ...remainingUnsynced].sort(
+        (a, b) => new Date(b.fed_at).getTime() - new Date(a.fed_at).getTime(),
+      );
+
+      entries.set(allEntries);
+      console.log(
+        "✅ Store updated with",
+        allEntries.length,
+        "entries (",
+        serverEntries.length,
+        "synced +",
+        remainingUnsynced.length,
+        "pending)",
+      );
     } else {
       console.error("❌ Invalid server response:", serverEntries);
     }
 
-    syncStatus.setSynced();
+    // Update sync status with remaining pending count
+    const stillPending = await idb.getUnsyncedEntries();
+    syncStatus.setPendingCount(stillPending.length);
+
+    if (stillPending.length === 0) {
+      syncStatus.setSynced();
+    } else {
+      syncStatus.setSyncing(false);
+    }
   } catch (error) {
     console.error("❌ Sync failed:", error);
     syncStatus.setSyncing(false);
