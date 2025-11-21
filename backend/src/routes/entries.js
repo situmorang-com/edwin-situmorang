@@ -137,13 +137,24 @@ router.post("/", async (req, res) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    console.log("💾 Inserting into database...");
+    console.log(
+      "💾 Inserting into database with user_id:",
+      req.user.id,
+      "name:",
+      req.user.name,
+    );
+    console.log("💾 Full user object from JWT:", JSON.stringify(req.user));
     const result = await dbRun(
       `INSERT INTO feeding_entries (user_id, type, quantity_ml, fed_at, notes) VALUES (?, ?, ?, ?, ?)`,
       [req.user.id, type, quantity_ml, fed_at, notes || null],
     );
 
-    console.log("✅ Entry inserted with ID:", result.lastID);
+    console.log(
+      "✅ Entry inserted with ID:",
+      result.lastID,
+      "for user_id:",
+      req.user.id,
+    );
 
     const entry = await dbGet(
       `
