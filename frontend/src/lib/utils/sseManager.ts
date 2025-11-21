@@ -1,6 +1,6 @@
 import { get } from "svelte/store";
 import { entries } from "$lib/stores/entries";
-import { syncManager } from "./syncManager";
+import { syncData } from "./syncManager";
 import type { FeedingEntry } from "$lib/types";
 
 class SSEManager {
@@ -170,7 +170,7 @@ class SSEManager {
     console.log("📡 Starting fallback polling (every 30 seconds)");
     this.fallbackPollInterval = setInterval(() => {
       console.log("🔄 Polling for updates (SSE fallback)");
-      syncManager.syncData();
+      syncData();
     }, 30000); // Poll every 30 seconds
   }
 
