@@ -7,10 +7,14 @@ const router = express.Router();
 // All routes require authentication
 router.use(authenticateToken);
 
-// Get all entries for the authenticated user
+// Get all entries (SHARED - all family members see all entries)
 router.get("/", async (req, res) => {
   try {
-    console.log("📊 Fetching entries for user:", req.user.id, req.user.email);
+    console.log(
+      "📊 Fetching ALL entries (family sharing) - requested by:",
+      req.user.id,
+      req.user.email,
+    );
     const entries = await dbAll(
       `
 			SELECT
@@ -18,14 +22,12 @@ router.get("/", async (req, res) => {
 				u.name as feeder_name
 			FROM feeding_entries e
 			JOIN users u ON e.user_id = u.id
-			WHERE e.user_id = ?
 			ORDER BY e.fed_at DESC
 			LIMIT 1000
 		`,
-      [req.user.id],
     );
 
-    console.log("📊 Found", entries.length, "entries");
+    console.log("📊 Found", entries.length, "entries from all family members");
     res.json(entries);
   } catch (error) {
     console.error("Error fetching entries:", error);
