@@ -144,6 +144,31 @@ router.post("/", async (req, res) => {
       req.user.name,
     );
     console.log("💾 Full user object from JWT:", JSON.stringify(req.user));
+
+    // Verify user exists in database (debug foreign key issue)
+    const userExists = await dbGet(
+      "SELECT id, email, name FROM users WHERE id = ?",
+      [req.user.id],
+    );
+    console.log(
+      "🔍 User exists in DB?",
+      userExists ? "YES" : "NO",
+      userExists ? JSON.stringify(userExists) : "User not found!",
+    );
+
+    if (!userExists) {
+      console.error(
+        "❌ CRITICAL: User",
+        req.user.id,
+        req.user.email,
+        "not in database! FK constraint will fail.",
+      );
+      return res.status(500).json({
+        error: "User not found in database",
+        details: `User ${req.user.email} (ID: ${req.user.id}) does not exist. Please re-login.`,
+      });
+    }
+
     const result = await dbRun(
       `INSERT INTO feeding_entries (user_id, type, quantity_ml, fed_at, notes) VALUES (?, ?, ?, ?, ?)`,
       [req.user.id, type, quantity_ml, fed_at, notes || null],
