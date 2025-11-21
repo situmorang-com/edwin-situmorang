@@ -1,6 +1,8 @@
 import express from "express";
-import { createSession } from "better-sse";
+import BetterSSE from "better-sse";
 import jwt from "jsonwebtoken";
+
+const { createSession } = BetterSSE;
 
 const router = express.Router();
 
