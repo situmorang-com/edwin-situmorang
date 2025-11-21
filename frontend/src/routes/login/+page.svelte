@@ -3,6 +3,8 @@
 	import { goto } from '$app/navigation';
 	import { auth } from '$lib/stores/auth';
 	import { loginWithGoogle } from '$lib/utils/api';
+	import { sseManager } from '$lib/utils/sseManager';
+	import { initSync } from '$lib/utils/syncManager';
 
 	let isLoading = false;
 	let error = '';
@@ -72,6 +74,11 @@
 			console.log('✅ Login successful:', data.user.name);
 
 			auth.login(data.user, data.token);
+
+			// Initialize sync and SSE after login
+			initSync();
+			sseManager.connect();
+
 			await goto('/');
 		} catch (err: any) {
 			const errorMsg = err?.message || 'Login failed. Please try again.';

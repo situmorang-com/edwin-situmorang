@@ -1,5 +1,7 @@
 import { writable } from "svelte/store";
 import { browser } from "$app/environment";
+import { sseManager } from "$lib/utils/sseManager";
+import { stopSync } from "$lib/utils/syncManager";
 
 export interface User {
   id: string;
@@ -67,6 +69,9 @@ function createAuthStore() {
       if (browser) {
         localStorage.removeItem("auth_token");
         localStorage.removeItem("auth_user");
+        // Disconnect SSE and stop sync on logout
+        sseManager.disconnect();
+        stopSync();
       }
       set({
         user: null,

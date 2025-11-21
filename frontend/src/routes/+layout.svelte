@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { auth } from '$lib/stores/auth';
 	import { initSync, stopSync, loadOfflineData } from '$lib/utils/syncManager';
+	import { sseManager } from '$lib/utils/sseManager';
 	import '../app.css';
 
 	onMount(async () => {
@@ -12,10 +13,13 @@
 		// Initialize sync if authenticated
 		if ($auth.isAuthenticated) {
 			initSync();
+			// Connect to SSE for real-time updates
+			sseManager.connect();
 		}
 
 		return () => {
 			stopSync();
+			sseManager.disconnect();
 		};
 	});
 

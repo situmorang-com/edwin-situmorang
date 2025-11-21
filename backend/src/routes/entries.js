@@ -1,6 +1,11 @@
 import express from "express";
 import { dbRun, dbGet, dbAll } from "../db/database.js";
 import { authenticateToken } from "../middleware/auth.js";
+import {
+  broadcastNewEntry,
+  broadcastUpdateEntry,
+  broadcastDeleteEntry,
+} from "./sse.js";
 
 const router = express.Router();
 
@@ -196,6 +201,10 @@ router.post("/", async (req, res) => {
     );
 
     console.log("✅ Entry created successfully:", entry);
+
+    // Broadcast to all connected SSE clients
+    broadcastNewEntry(entry);
+
     res.status(201).json(entry);
   } catch (error) {
     console.error("❌ Error creating entry:", error);
@@ -277,6 +286,9 @@ router.put("/:id", async (req, res) => {
       [id],
     );
 
+    // Broadcast update to all connected SSE clients
+    broadcastUpdateEntry(entry);
+
     res.json(entry);
   } catch (error) {
     console.error("Error updating entry:", error);
@@ -298,6 +310,9 @@ router.delete("/:id", async (req, res) => {
     }
 
     await dbRun("DELETE FROM feeding_entries WHERE id = ?", [id]);
+
+    // Broadcast deletion to all connected SSE clients
+    broadcastDeleteEntry(id);
 
     res.status(204).send();
   } catch (error) {
