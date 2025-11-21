@@ -18,7 +18,7 @@ class SSEManager {
       return;
     }
 
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("auth_token");
     if (!token) {
       console.log("📡 No token, skipping SSE connection");
       return;
